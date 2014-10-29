@@ -8,8 +8,9 @@ package br.furb.easyscore.websocket;
  */
 public enum MessageTypes {
 
-	CREATE("create"), JOIN("join"), LIST("list"), NOTIFY("notify"), SEND_SCORE(
-			"send_score"), GET_SCORE("list_score"), SERVER_TIME("server_time"), LIST_ALL_SCORES("list_all_score");
+	CREATE("create"), JOIN("join"), LIST("list"), SEND_SCORE("send_score"), GET_SCORE(
+			"list_score"), SERVER_TIME("server_time"), LIST_ALL_SCORES(
+			"list_all_score");
 
 	private String value;
 

@@ -8,7 +8,6 @@ public class Studio {
 	private Integer id;
 	private String name;
 	private String owner;
-	private List<String> members; //grupo de membros da partitura
 	private List<Score> scores;
 
 	public List<Score> getScores() {
@@ -20,7 +19,6 @@ public class Studio {
 	}
 
 	public Studio() {
-		members = new ArrayList<String>();
 		scores = new ArrayList<Score>();
 	}
 
@@ -47,13 +45,4 @@ public class Studio {
 	public void setOwner(String owner) {
 		this.owner = owner;
 	}
-
-	public List<String> getMembers() {
-		return members;
-	}
-
-	public void setMembers(List<String> members) {
-		this.members = members;
-	}
-
 }

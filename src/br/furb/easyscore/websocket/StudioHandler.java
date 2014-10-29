@@ -57,6 +57,9 @@ public class StudioHandler {
 		JsonObjectBuilder studioBuilder = Json.createObjectBuilder();
 		studioBuilder.add("id", score.getId());
 		studioBuilder.add("name", score.getName());
+		studioBuilder.add("studio", score.getStudio().getId());
+		//studioBuilder.add("speed", score.getSpeed());
+		//studioBuilder.add("start", (JsonValue) score.getStart());
 		if (sendContent)
 			studioBuilder.add("content", score.getContent());
 		return studioBuilder;
@@ -79,15 +82,13 @@ public class StudioHandler {
 				content.put(sessionId, returningMessage);
 				return content;
 			case JOIN:
-				returningMessage = this.joinStudio(sessionId, json);
+				returningMessage = this.joinStudio(json);
 				content.put(sessionId, returningMessage);
 				return content;
 			case LIST:
 				returningMessage = this.listStudios(sessionId, json);
 				content.put(sessionId, returningMessage);
 				return content;
-			case NOTIFY:
-				return this.notifyStudio(sessionId, json);
 			case SEND_SCORE:
 				returningMessage = this.createScore(sessionId, json);
 				content.put(sessionId, returningMessage);
@@ -150,6 +151,7 @@ public class StudioHandler {
 		// default time zone and
 		// locale.
 		//calendar.add(Calendar.SECOND, 30); ADICIONA 30 SEGUNDOS --DEVE FAZER A DIFERENÇA
+		//objBuilder.add("time", calendar.getTime().getTime());
 		objBuilder.add("time", calendar.getTime().getTime());
 		jsonArrayBuilder.add(objBuilder);
 		response.add("values", jsonArrayBuilder);
@@ -182,7 +184,7 @@ public class StudioHandler {
 		if (studio != null) {
 			String name = studioValues.getJsonObject(0).getString("name");
 			String content = studioValues.getJsonObject(0).getString("content");
-			Score score = new Score(getNextScoreId(), name, content);
+			Score score = new Score(getNextScoreId(), name, content, studio);
 			studio.getScores().add(score);
 			return addMessage(Json.createObjectBuilder(), "OK").toString();
 		} else {
@@ -194,74 +196,6 @@ public class StudioHandler {
 	private Integer getNextScoreId() {
 		ID_SCORE++;
 		return ID_SCORE;
-	}
-
-	/*
-	 * Método criado para disparar a notificação de início da música
-	 */
-	private Map<String, String> notifyStudio(String sessionId, JsonObject json) {
-		JsonArray studioValues = json.getJsonArray("values");
-		Integer studioId = Integer.parseInt(studioValues.getJsonObject(0)
-				.getString("studio_id"));
-		Integer scoreId = Integer.parseInt(studioValues.getJsonObject(0)
-				.getString("score_id"));
-		Map<String, String> ret = new HashMap<String, String>();
-		Studio studio = getStudioById(studioId);
-		Score sc = null;
-		if (studio != null) {
-			studio.getMembers().add(sessionId);
-			if (studio.getOwner().trim().equals(sessionId.trim())) {
-				for (Score score : studio.getScores()) {
-					if (score.getId().equals(scoreId)) {
-						sc = score;
-					}
-				}
-				if (sc == null) {
-					ret.put(sessionId,
-							addMessage(Json.createObjectBuilder(),
-									"Partitura não encontrada").toString());
-				}
-				JsonObject response = createNotifyObject(json);
-				for (String session : studio.getMembers()) {
-					ret.put(session, response.toString());
-				}
-				return ret;
-			} else {
-				ret.put(sessionId,
-						addMessage(Json.createObjectBuilder(),
-								"Somente o maestro pode notificar o estúdio")
-								.toString());
-			}
-
-		} else {
-			ret.put(sessionId,
-					addMessage(Json.createObjectBuilder(),
-							"Estúdio não encontrado").toString());
-		}
-		return ret;
-
-	}
-
-	private JsonObject createNotifyObject(JsonObject json) {
-		JsonObjectBuilder objBuilder = Json.createObjectBuilder();
-		JsonObjectBuilder notifyBuilder = Json.createObjectBuilder();
-		notifyBuilder.add("type", "notify");
-		JsonArray msgValues = json.getJsonArray("values");
-
-		objBuilder.add("studio_id",
-				msgValues.getJsonObject(0).getString("studio_id"));
-		objBuilder.add("score_id",
-				msgValues.getJsonObject(0).getString("score_id"));
-		Calendar calendar = Calendar.getInstance(); // gets a calendar using the
-													// default time zone and
-													// locale.
-		calendar.add(Calendar.SECOND, 30);
-		objBuilder.add("time", calendar.getTime().getTime());
-		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		arrayBuilder.add(objBuilder);
-		notifyBuilder.add("values", arrayBuilder.build());
-		return notifyBuilder.build();
-
 	}
 
 	private String listStudios(String sessionId, JsonObject json) {
@@ -280,17 +214,59 @@ public class StudioHandler {
 		return responseBuilder.build();
 	}
 
-	private String joinStudio(String sessionId, JsonObject studioJson) {
-		JsonArray studioValues = studioJson.getJsonArray("values");
+	//Usuário acessa o estúdio e seleciona partitura desejada - RETORNO com partitura, tempo e velocidade
+	private String joinStudio(JsonObject json) {
+		
+		JsonArray studioValues = json.getJsonArray("values");
 		Integer studioId = Integer.parseInt(studioValues.getJsonObject(0)
 				.getString("studio_id"));
+		Integer scoreId = Integer.parseInt(studioValues.getJsonObject(0)
+				.getString("score_id"));
+		//Map<String, String> ret = new HashMap<String, String>();
 		Studio studio = getStudioById(studioId);
+		Score sc = null;
+		
 		if (studio != null) {
-			studio.getMembers().add(sessionId);
 			JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
 			for (Score score : studio.getScores()) {
 				jsonArrayBuilder.add((createScoreObject(score, false).build()));
 			}
+
+			//do mapping
+			for (Score score : studio.getScores()) {
+				if (score.getId().equals(scoreId)) {
+					sc = score;
+				}
+			}
+			if (sc == null) {
+				return addMessage(Json.createObjectBuilder(),
+						"Partitura não encontrada").toString();
+			}
+			//JsonObject response = createNotifyObject(json);
+			//for (String session : studio.getMembers()) {
+				//ret.put(session, response.toString());
+			//}
+			//return ret;	
+		
+			 //do createNotification
+			JsonObjectBuilder objBuilder = Json.createObjectBuilder();
+			JsonObjectBuilder notifyBuilder = Json.createObjectBuilder();
+			notifyBuilder.add("type", "notify");
+			JsonArray msgValues = json.getJsonArray("values");
+
+			objBuilder.add("studio_id",
+					msgValues.getJsonObject(0).getString("studio_id"));
+			objBuilder.add("score_id",
+					msgValues.getJsonObject(0).getString("score_id"));
+			Calendar calendar = Calendar.getInstance(); // gets a calendar using the
+														// default time zone and
+														// locale.
+			calendar.add(Calendar.SECOND, 30);
+			objBuilder.add("time", calendar.getTime().getTime());
+			JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+			arrayBuilder.add(objBuilder);
+			notifyBuilder.add("values", arrayBuilder.build());
+
 			return addMessage(jsonArrayBuilder.build(), "scores", "OK")
 					.toString();
 		} else {

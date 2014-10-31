@@ -5,13 +5,11 @@ public class Score {
 	private Integer id;
 	private String name;
 	private String content;
-	private Studio studio;
 
-	public Score(Integer id, String name, String content, Studio studio) {
+	public Score(Integer id, String name, String content) {
 		this.id = id;
 		this.name = name;
 		this.content = content;
-		this.studio = studio;
 	}
 
 	public Integer getId() {
@@ -36,13 +34,5 @@ public class Score {
 
 	public void setContent(String content) {
 		this.content = content;
-	}
-
-	public Studio getStudio() {
-		return studio;
-	}
-
-	public void setStudio(Studio studio) {
-		this.studio = studio;
 	}
 }

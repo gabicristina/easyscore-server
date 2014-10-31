@@ -28,43 +28,6 @@ public class StudioHandler {
 
 	private List<Studio> studios = new ArrayList<Studio>();
 
-	public String createStudio(String sessionId, JsonObject studioJson) {
-		JsonArray studioValues = studioJson.getJsonArray("values");
-		Studio studio = new Studio();
-		studio.setId(getNextId());
-		studio.setOwner(sessionId);
-		studio.setName(studioValues.getJsonObject(0).getString("name"));
-		studios.add(studio);
-		JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
-		responseBuilder.add("studio", createStudioObject(studio));
-		return addMessage(responseBuilder, "OK").toString();
-	}
-
-	private JsonObject addMessage(JsonObjectBuilder studio, String msg) {
-		studio.add("message", msg);
-		return studio.build();
-	}
-
-	private JsonObjectBuilder createStudioObject(Studio studio) {
-		JsonObjectBuilder studioBuilder = Json.createObjectBuilder();
-		studioBuilder.add("id", studio.getId());
-		studioBuilder.add("owner", studio.getOwner());
-		studioBuilder.add("name", studio.getName());
-		return studioBuilder;
-	}
-
-	private JsonObjectBuilder createScoreObject(Score score, boolean sendContent) {
-		JsonObjectBuilder studioBuilder = Json.createObjectBuilder();
-		studioBuilder.add("id", score.getId());
-		studioBuilder.add("name", score.getName());
-		studioBuilder.add("studio", score.getStudio().getId());
-		//studioBuilder.add("speed", score.getSpeed());
-		//studioBuilder.add("start", (JsonValue) score.getStart());
-		if (sendContent)
-			studioBuilder.add("content", score.getContent());
-		return studioBuilder;
-	}
-
 	public Map<String, String> handleRequest(String sessionId, String msg) {
 		/**
 		 * Verificar o tipo da mensagem, se é uma mensagem de criação de grupo,
@@ -115,6 +78,42 @@ public class StudioHandler {
 			return content;
 
 		}
+	}
+	
+	private JsonObject addMessage(JsonObjectBuilder studio, String msg) {
+		studio.add("message", msg);
+		return studio.build();
+	}
+	
+	public String createStudio(String sessionId, JsonObject studioJson) {
+		JsonArray studioValues = studioJson.getJsonArray("values");
+		Studio studio = new Studio();
+		studio.setId(getNextId());
+		studio.setOwner(sessionId);
+		studio.setName(studioValues.getJsonObject(0).getString("name"));
+		studios.add(studio);
+		JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
+		responseBuilder.add("studio", createStudioObject(studio));
+		return addMessage(responseBuilder, "OK").toString();
+	}
+
+	private JsonObjectBuilder createStudioObject(Studio studio) {
+		JsonObjectBuilder studioBuilder = Json.createObjectBuilder();
+		studioBuilder.add("id", studio.getId());
+		studioBuilder.add("owner", studio.getOwner());
+		studioBuilder.add("name", studio.getName());
+		return studioBuilder;
+	}
+
+	private JsonObjectBuilder createScoreObject(Score score, boolean sendContent) {
+		JsonObjectBuilder studioBuilder = Json.createObjectBuilder();
+		studioBuilder.add("id", score.getId());
+		studioBuilder.add("name", score.getName());
+		//studioBuilder.add("speed", score.getSpeed());
+		//studioBuilder.add("start", (JsonValue) score.getStart());
+		if (sendContent)
+			studioBuilder.add("content", score.getContent());
+		return studioBuilder;
 	}
 
 	private String getAllScores(String sessionId, JsonObject json) {
@@ -184,7 +183,7 @@ public class StudioHandler {
 		if (studio != null) {
 			String name = studioValues.getJsonObject(0).getString("name");
 			String content = studioValues.getJsonObject(0).getString("content");
-			Score score = new Score(getNextScoreId(), name, content, studio);
+			Score score = new Score(getNextScoreId(), name, content);
 			studio.getScores().add(score);
 			return addMessage(Json.createObjectBuilder(), "OK").toString();
 		} else {

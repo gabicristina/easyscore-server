@@ -7,8 +7,9 @@ public class Studio {
 
 	private Integer id;
 	private String name;
-	private String owner;
 	private List<Score> scores;
+	private Integer start; //timestamp - milisegundos
+	private Integer speed;
 
 	public List<Score> getScores() {
 		return scores;
@@ -38,11 +39,19 @@ public class Studio {
 		this.name = name;
 	}
 
-	public String getOwner() {
-		return owner;
+	public Integer getStart() {
+		return start;
 	}
 
-	public void setOwner(String owner) {
-		this.owner = owner;
+	public void setStart(Integer start) {
+		this.start = start;
+	}
+
+	public Integer getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(Integer speed) {
+		this.speed = speed;
 	}
 }

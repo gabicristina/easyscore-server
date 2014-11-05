@@ -3,7 +3,7 @@ package br.furb.easyscore.websocket;
 /**
  * Define o tipo de mensagens que podem ser trocadas.
  * 
- * @author ITEN
+ * @author Gabriela
  * 
  */
 public enum MessageTypes {

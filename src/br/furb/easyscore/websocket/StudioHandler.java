@@ -113,16 +113,17 @@ public class StudioHandler {
 	private String createScore(String sessionId, JsonObject json) {
 		JsonArray studioValues = json.getJsonArray("values");
 		Integer studioId = studioValues.getJsonObject(0).getInt("studio_id");
-		Studio studio = getStudioById(studioId);
-		if (studio != null) {
-			String name = studioValues.getJsonObject(0).getString("name");
-			String content = studioValues.getJsonObject(0).getString("content");
-			Score score = new Score(getNextScoreId(), name, content);
+		
+		String name = studioValues.getJsonObject(0).getString("name");
+		String content = studioValues.getJsonObject(0).getString("content");
+		Score score = new Score(getNextScoreId(), name, content);
+		
+		if (studioId != null) {
+			Studio studio = getStudioById(studioId);
 			studio.getScores().add(score);
-			return addMessage(Json.createObjectBuilder(), "OK").toString();
+			return addMessage(Json.createObjectBuilder(), "OK - Adicionado ao grupo").toString();
 		} else {
-			return addMessage(Json.createObjectBuilder(),
-					"Estúdio não encontrado").toString();
+			return addMessage(Json.createObjectBuilder(), "OK").toString();
 		}
 	}
 
@@ -258,7 +259,7 @@ public class StudioHandler {
 			arrayBuilder.add(objBuilder);
 			notifyBuilder.add("values", arrayBuilder.build());
 
-			return addMessage(jsonArrayBuilder.build(), "scores", "OK")
+			return addMessage(jsonArrayBuilder.build(), "join", "OK")
 					.toString();
 		} else {
 			return addMessage(Json.createObjectBuilder(),

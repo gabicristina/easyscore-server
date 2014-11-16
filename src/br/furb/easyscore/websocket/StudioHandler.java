@@ -93,7 +93,10 @@ public class StudioHandler {
 		studio.setId(getNextId());
 		studio.setName(studioValues.getJsonObject(0).getString("name"));
 		// String start = studioValues.getJsonObject(0).getString("start");
-		studio.setStart(studioValues.getJsonObject(0).getInt("start"));
+		String start = studioValues.getJsonObject(0).getString("start");
+		double dou = Double.parseDouble(start);
+	    long lo = (long) dou;
+		studio.setStart(lo);
 		studio.setSpeed(studioValues.getJsonObject(0).getInt("speed"));
 		studios.add(studio);
 		JsonObjectBuilder responseBuilder = Json.createObjectBuilder();

@@ -8,7 +8,7 @@ public class Studio {
 	private Integer id;
 	private String name;
 	private List<Score> scores;
-	private Integer start; //timestamp - milisegundos
+	private Long start; //timestamp - milisegundos
 	private Integer speed;
 
 	public List<Score> getScores() {
@@ -39,11 +39,11 @@ public class Studio {
 		this.name = name;
 	}
 
-	public Integer getStart() {
+	public Long getStart() {
 		return start;
 	}
 
-	public void setStart(Integer start) {
+	public void setStart(Long start) {
 		this.start = start;
 	}
 

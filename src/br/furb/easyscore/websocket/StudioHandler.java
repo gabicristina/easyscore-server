@@ -29,6 +29,7 @@ public class StudioHandler {
 	private static Integer ID = 0;
 
 	private List<Studio> studios = new ArrayList<Studio>();
+	private List<Score> scores = new ArrayList<Score>();
 
 	public Map<String, String> handleRequest(String sessionId, String msg) {
 		/**
@@ -56,6 +57,10 @@ public class StudioHandler {
 				return content;
 			case SEND_SCORE:
 				returningMessage = this.createScore(sessionId, json);
+				content.put(sessionId, returningMessage);
+				return content;
+			case ADD_SCORE:
+				returningMessage = this.addStudioScore(sessionId, json);
 				content.put(sessionId, returningMessage);
 				return content;
 			case GET_SCORE:
@@ -115,56 +120,67 @@ public class StudioHandler {
 
 	private String createScore(String sessionId, JsonObject json) {
 		JsonArray studioValues = json.getJsonArray("values");
-		Integer studioId = studioValues.getJsonObject(0).getInt("studio_id");
-		
 		String name = studioValues.getJsonObject(0).getString("name");
 		String content = studioValues.getJsonObject(0).getString("content");
 		Score score = new Score(getNextScoreId(), name, content);
+		scores.add(score);
 		
-		if (studioId != null) {
+		try {
+			Integer studioId = studioValues.getJsonObject(0).getInt("studio_id");
+
 			Studio studio = getStudioById(studioId);
 			studio.getScores().add(score);
 			return addMessage(Json.createObjectBuilder(), "OK - Adicionado ao grupo").toString();
-		} else {
+		} catch (Exception e){
 			return addMessage(Json.createObjectBuilder(), "OK").toString();
 		}
+	}
+	
+	private String addStudioScore(String sessionId, JsonObject json) {
+		JsonArray studioValues = json.getJsonArray("values");
+		Integer studioId = studioValues.getJsonObject(0).getInt("studio_id");
+		Integer scoreId = studioValues.getJsonObject(0).getInt("score_id");
+
+		Studio studio = getStudioById(studioId);
+		Score score = getScoreById(scoreId);
+		studio.getScores().add(score);
+		return addMessage(Json.createObjectBuilder(), "add_score OK").toString();
 	}
 
 	private JsonObjectBuilder createScoreObject(Score score, Studio studio, boolean sendContent) {
 		JsonObjectBuilder studioBuilder = Json.createObjectBuilder();
 		studioBuilder.add("id", score.getId());
 		studioBuilder.add("name", score.getName());
-		if (sendContent)
+		if (sendContent && studio != null) {
 			studioBuilder.add("content", score.getContent());
 			studioBuilder.add("speed", studio.getSpeed());
 			studioBuilder.add("start", studio.getStart());
+		}
 		return studioBuilder;
 	}
 
 	private String getAllScores(String sessionId, JsonObject json) {
 		JsonArray studioValues = json.getJsonArray("values");
 		Integer studioId = null;
+		JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+
 		if (studioValues != null) {
 			studioId = studioValues.getJsonObject(0).getInt("studio_id");
-		}
-		JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
-		List<Studio> studioToList = new ArrayList<Studio>();
-		if (studioId != null) {
+			
 			Studio studio = getStudioById(studioId);
 			if (studio == null) {
 				return addMessage(Json.createObjectBuilder(),
 						"Estúdio não encontrado").toString();
 			}
-			studioToList.add(studio);
-		} else {
-			studioToList = studios;
-		}
-		for (Studio studio : studioToList) {
 			for (Score score : studio.getScores()) {
 				jsonArrayBuilder.add((createScoreObject(score, studio, true).build()));
 			}
+		} else {
+			Studio s = new Studio();
+			for (Score score : scores) {
+				jsonArrayBuilder.add((createScoreObject(score, s, false).build()));
+			}
 		}
-
 		return addMessage(jsonArrayBuilder.build(), "scores", "OK").toString();
 	}
 
@@ -211,8 +227,14 @@ public class StudioHandler {
 
 	private String listStudios(String sessionId, JsonObject json) {
 		JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+		Calendar calendar = Calendar.getInstance();
 		for (Studio studio : studios) {
-			jsonArrayBuilder.add((createStudioObject(studio).build()));
+			if (studio.getStart() < calendar.getTimeInMillis()) {
+				studios.remove(studio);
+				//caso o estúdio seja antigo, será removido
+			} else {
+				jsonArrayBuilder.add((createStudioObject(studio).build()));
+			}
 		}
 
 		return addMessage(jsonArrayBuilder.build(), "studios", "OK").toString();
@@ -233,23 +255,16 @@ public class StudioHandler {
 		Integer scoreId = studioValues.getJsonObject(0).getInt("score_id");
 		// Map<String, String> ret = new HashMap<String, String>();
 		Studio studio = getStudioById(studioId);
-		
+		Score score = getScoreById(scoreId);
 		if (studio != null) {
-			JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
-			for (Score score : studio.getScores()) {
-				if (score.getId() == scoreId) {
-					jsonArrayBuilder.add((createScoreObject(score, studio, true).build()));
-					//sair do for
-				}
-			}
-
 			JsonObjectBuilder objBuilder = Json.createObjectBuilder();
-			JsonObjectBuilder notifyBuilder = Json.createObjectBuilder();
-			notifyBuilder.add("type", "notify");
-			//JsonArray msgValues = json.getJsonArray("values");
-
+			
 			objBuilder.add("studio_id",studioId.toString());
+			objBuilder.add("studio_vel",studio.getSpeed());
 			objBuilder.add("score_id",scoreId.toString());
+			objBuilder.add("score_name",score.getName());
+			objBuilder.add("score_content",score.getContent());
+			
 			Calendar calendar = Calendar.getInstance(); // gets a calendar using
 														// the
 														// default time zone and
@@ -260,10 +275,9 @@ public class StudioHandler {
 			objBuilder.add("tempo", String.valueOf(studio.getStart() - calendar.getTimeInMillis()));
 			JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 			arrayBuilder.add(objBuilder);
-			notifyBuilder.add("values", arrayBuilder.build());
-
-			return addMessage(jsonArrayBuilder.build(), "join", "OK")
-					.toString();
+			
+			//return objBuilder.build().toString();
+			return addMessage(arrayBuilder.build(), "studios", "OK").toString();
 		} else {
 			return addMessage(Json.createObjectBuilder(),
 					"Estúdio não encontrado").toString();
@@ -286,6 +300,15 @@ public class StudioHandler {
 		for (Studio studio : studios) {
 			if (studio.getId().equals(id)) {
 				return studio;
+			}
+		}
+		return null;
+	}
+	
+	public Score getScoreById(Integer id) {
+		for (Score score : scores) {
+			if (score.getId().equals(id)) {
+				return score;
 			}
 		}
 		return null;

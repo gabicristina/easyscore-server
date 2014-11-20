@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -143,6 +144,14 @@ public class StudioHandler {
 
 		Studio studio = getStudioById(studioId);
 		Score score = getScoreById(scoreId);
+		
+		if (studio == null) {
+			return addMessage(Json.createObjectBuilder(),
+					"Estúdio não encontrado").toString();
+		} else if (score == null) {
+			return addMessage(Json.createObjectBuilder(),
+					"Partitura não encontrada").toString();
+		}
 		studio.getScores().add(score);
 		return addMessage(Json.createObjectBuilder(), "add_score OK").toString();
 	}
@@ -228,9 +237,20 @@ public class StudioHandler {
 	private String listStudios(String sessionId, JsonObject json) {
 		JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
 		Calendar calendar = Calendar.getInstance();
-		for (Studio studio : studios) {
+		Iterator<Studio> i = studios.iterator();
+		/*for (Studio studio : studios) {
 			if (studio.getStart() < calendar.getTimeInMillis()) {
 				studios.remove(studio);
+				//caso o estúdio seja antigo, será removido
+			} else {
+				jsonArrayBuilder.add((createStudioObject(studio).build()));
+			}
+		}*/
+		while (i.hasNext()) {
+			Studio studio = i.next(); // must be called before you can call i.remove()
+			   // Do something
+			if (studio.getStart() < calendar.getTimeInMillis()) {
+				i.remove();
 				//caso o estúdio seja antigo, será removido
 			} else {
 				jsonArrayBuilder.add((createStudioObject(studio).build()));
@@ -277,7 +297,7 @@ public class StudioHandler {
 			arrayBuilder.add(objBuilder);
 			
 			//return objBuilder.build().toString();
-			return addMessage(arrayBuilder.build(), "studios", "OK").toString();
+			return addMessage(arrayBuilder.build(), "join", "OK").toString();
 		} else {
 			return addMessage(Json.createObjectBuilder(),
 					"Estúdio não encontrado").toString();

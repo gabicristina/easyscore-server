@@ -76,6 +76,10 @@ public class StudioHandler {
 				returningMessage = this.getAllScores(sessionId, json);
 				content.put(sessionId, returningMessage);
 				return content;
+			case CLEAN_SERVER:
+				returningMessage = this.clearServer(sessionId, json);
+				content.put(sessionId, returningMessage);
+				return content;
 			default:
 				throw new EasyScoreException();
 			}
@@ -332,5 +336,12 @@ public class StudioHandler {
 			}
 		}
 		return null;
+	}
+	
+	public String clearServer(String sessionId, JsonObject studioJson) {
+		studios.clear();
+		scores.clear();
+		
+		return addMessage(Json.createObjectBuilder(), "OK").toString();
 	}
 }

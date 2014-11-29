@@ -10,7 +10,7 @@ public enum MessageTypes {
 
 	CREATE("create"), JOIN("join"), LIST("list"), SEND_SCORE("send_score"), ADD_SCORE("add_score"), GET_SCORE(
 			"list_score"), SERVER_TIME("server_time"), LIST_ALL_SCORES(
-			"list_all_score");
+			"list_all_score"), CLEAN_SERVER("clean_server");
 
 	private String value;
 
